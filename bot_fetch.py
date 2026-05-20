@@ -2,9 +2,13 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 import time
+import os
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.table import Table, TableStyleInfo
 
 # ========== ใส่ TOKEN ใหม่หลัง ROTATE ==========
-TOKEN = "eyJvcmciOiI2NzM1NzgwZWM4YzFlYjAwMDEyYTM3NzEiLCJpZCI6IjhkNTY2N2RiZGI1OTQ2MWU5NTMyYWFhMTE5YWIxYWIzIiwiaCI6Im11cm11cjEyOCJ9"
+TOKEN = "  รอใส่ TOKEN จากผู้ต้องการเข้าถึงข้อมูล  "
 # ================================================
 
 URL = "https://gateway.api.bot.or.th/Stat-ExchangeRate/v2/DAILY_AVG_EXG_RATE/"
@@ -18,7 +22,7 @@ all_data = []
 
 # กำหนดช่วงเวลาที่ต้องการ
 start_date = datetime(2014, 1, 1)
-#start_date = datetime(2026, 5, 17)เผื่อเอาไว้เทส
+#start_date = datetime(2026, 5, 17)เอาไว้เทส
 end_date   = datetime.today()
 
 print("🚀 กำลังดึงข้อมูล THB/USD จาก BOT API...")
@@ -69,6 +73,33 @@ df = df.dropna()  # ลบวันที่ไม่มีข้อมูล (�
 
 output = "THB_USD_Historical_12Years.xlsx"
 df.to_excel(output, index=False, sheet_name="Exchange Rate")
+
+# เปิดไฟล์มาแปลงเป็น Table
+wb = load_workbook(output)
+ws = wb["Exchange Rate"]
+
+# กำหนดขนาด Table (ครอบคลุมทุกแถวและคอลัมน์)
+last_row = len(df) + 1  # +1 เพราะมี Header
+last_col = get_column_letter(len(df.columns))
+table_range = f"A1:{last_col}{last_row}"
+
+# สร้าง Table
+table = Table(
+    displayName="ExchangeRateData",
+    ref=table_range
+)
+
+# เลือกสไตล์ตาราง (เปลี่ยนเลขท้ายได้ 1-21)
+table.tableStyleInfo = TableStyleInfo(
+    name="TableStyleMedium2",  # สีฟ้า
+    showFirstColumn=False,
+    showLastColumn=False,
+    showRowStripes=True,   # แถบสลับสี
+    showColumnStripes=False
+)
+
+ws.add_table(table)
+wb.save(output)
 
 print(f"✅ เสร็จสิ้น! ได้ข้อมูลทั้งหมด {len(df)} รายการ")
 print(f"📁 ไฟล์: {output}")
